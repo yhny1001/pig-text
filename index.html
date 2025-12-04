@@ -6,7 +6,6 @@
   <title>测测你是不是猪</title>
   <!-- Tailwind CSS v3 -->
   <script src="https://cdn.tailwindcss.com"></script>
-
   
   <script>
     tailwind.config = {
@@ -16,6 +15,7 @@
             primary: '#FFB6C1', // 浅粉色
             secondary: '#F5F5F5', // 浅灰色
             accent: '#FF69B4', // 亮粉色
+            dark: '#FF1493', // 深粉色
           },
           fontFamily: {
             sans: ['Arial Rounded MT Bold', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
@@ -24,11 +24,16 @@
             'bounce-slow': 'bounce 2s infinite',
             'wiggle': 'wiggle 1s ease-in-out infinite',
             'pulse-slow': 'pulse 3s infinite',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
           },
           keyframes: {
             wiggle: {
               '0%, 100%': { transform: 'rotate(-3deg)' },
               '50%': { transform: 'rotate(3deg)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
             }
           }
         }
@@ -44,39 +49,11 @@
       .text-shadow-lg {
         text-shadow: 0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
       }
-      .progress-ring-circle {
-        transition: stroke-dashoffset 0.35s;
-        transform: rotate(-90deg);
-        transform-origin: 50% 50%;
-      }
     }
     
     body {
-      touch-action: none; /* 防止长按弹出菜单 */
-      user-select: none; /* 防止文本选择 */
-      -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
-    }
-    
-    .result-card {
-      transform-style: preserve-3d;
-      transition: transform 0.6s;
-    }
-    
-    .result-card.flipped {
-      transform: rotateY(180deg);
-    }
-    
-    .result-card-front, .result-card-back {
-      backface-visibility: hidden;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    
-    .result-card-back {
-      transform: rotateY(180deg);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     
     @keyframes float {
@@ -88,33 +65,19 @@
     .float-animation {
       animation: float 3s ease-in-out infinite;
     }
-    
-    .progress-container {
-      position: relative;
-      width: 200px;
-      height: 200px;
+
+    /* Quiz Styles */
+    .quiz-option {
+      @apply w-full p-4 mb-3 text-left bg-white border-2 border-primary rounded-xl text-gray-700 transition-all duration-200;
     }
-    
-    .progress-ring {
-      transform: rotate(-90deg);
+    .quiz-option:active, .quiz-option:hover {
+      @apply bg-primary/10 border-accent transform scale-[1.02];
     }
-    
-    .progress-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1.5rem;
-      font-weight: bold;
+    .progress-bar-bg {
+      @apply w-full h-3 bg-gray-200 rounded-full overflow-hidden;
     }
-    
-    .press-hint {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
+    .progress-bar-fill {
+      @apply h-full bg-accent transition-all duration-300 ease-out;
     }
   </style>
 </head>
@@ -122,73 +85,71 @@
   <div class="container max-w-md mx-auto text-center">
     <!-- 标题 -->
     <h1 class="text-4xl md:text-5xl font-bold mb-6 text-primary text-shadow-lg">
-      测测你是不是猪 <span class="text-accent">🐷</span>
+      测测你是不是猪 <span class="text-accent inline-block hover:animate-spin">🐷</span>
     </h1>
     
     <!-- 主内容区 -->
-    <div class="bg-white rounded-3xl shadow-lg p-6 mb-8 transform transition-all duration-300 hover:shadow-xl">
-      <!-- 测试区域 -->
-      <div id="test-area" class="mb-6">
-        <div class="progress-container mx-auto">
-          <!-- 圆形进度条 -->
-          <svg class="progress-ring" width="200" height="200">
-            <circle
-              class="text-gray-200"
-              stroke-width="10"
-              stroke="currentColor"
-              fill="transparent"
-              r="85"
-              cx="100"
-              cy="100"
-            />
-            <circle
-              id="progress-circle"
-              class="text-primary progress-ring-circle"
-              stroke-width="10"
-              stroke="currentColor"
-              fill="transparent"
-              r="85"
-              cx="100"
-              cy="100"
-              stroke-dasharray="534.07"
-              stroke-dashoffset="534.07"
-            />
-          </svg>
-          
-          <!-- 长按提示 -->
-          <div id="press-hint" class="press-hint">
-            <div class="text-5xl mb-2">👇</div>
-            <p class="text-lg text-gray-600">长按这里测试</p>
+    <div class="bg-white rounded-3xl shadow-lg p-6 mb-8 transform transition-all duration-300 hover:shadow-xl min-h-[400px] flex flex-col justify-center">
+      
+      <!-- 1. 开始界面 -->
+      <div id="start-view" class="flex flex-col items-center">
+        <div class="text-6xl mb-6 animate-bounce-slow">🤔</div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">猪猪人格测试</h2>
+        <p class="text-gray-600 mb-8 px-4">
+          每个人心中都住着一只猪猪。<br>
+          回答几个简单的问题，<br>
+          测测你的灵魂属于哪种猪！
+        </p>
+        <button onclick="startQuiz()" class="bg-primary hover:bg-accent text-white text-xl font-bold py-4 px-12 rounded-full shadow-md transition-all transform hover:scale-105 active:scale-95">
+          开始测试
+        </button>
+      </div>
+
+      <!-- 2. 答题界面 (初始隐藏) -->
+      <div id="quiz-view" class="hidden w-full">
+        <!-- 进度条 -->
+        <div class="mb-6">
+          <div class="flex justify-between text-sm text-gray-500 mb-1">
+            <span>进度</span>
+            <span id="question-counter">1/5</span>
           </div>
-          
-          <!-- 进度文本 -->
-          <div id="progress-text" class="progress-text hidden">
-            <span id="progress-percentage">0%</span>
+          <div class="progress-bar-bg">
+            <div id="progress-bar" class="progress-bar-fill" style="width: 0%"></div>
           </div>
         </div>
-        
-        <!-- 提示文字 -->
-        <p id="instruction" class="text-gray-600 mt-6">
-          长按屏幕中间区域，看看你是什么猪！
-        </p>
+
+        <!-- 问题 -->
+        <h3 id="question-text" class="text-xl font-bold text-gray-800 mb-6 leading-relaxed min-h-[3.5rem]">
+          问题加载中...
+        </h3>
+
+        <!-- 选项容器 -->
+        <div id="options-container" class="flex flex-col gap-2">
+          <!-- 选项将通过 JS 动态插入 -->
+        </div>
       </div>
       
-      <!-- 结果区域 (初始隐藏) -->
-      <div id="result-area" class="hidden">
-        <div class="bg-primary/10 rounded-2xl p-6 flex flex-col items-center justify-center h-64 mb-6">
-          <img id="result-emoji" class="w-24 h-24 mb-4 float-animation" src="image/pig.png" alt="猪">
-          <h2 id="result-title" class="text-2xl font-bold text-gray-800 mb-2">猪</h2>
-          <p id="result-description" class="text-gray-600">
+      <!-- 3. 结果区域 (初始隐藏) -->
+      <div id="result-area" class="hidden animate-fade-in">
+        <div class="bg-primary/10 rounded-2xl p-6 flex flex-col items-center justify-center mb-6 border border-primary/20">
+          <img id="result-emoji" class="w-32 h-32 mb-4 float-animation object-contain" src="image/pig.png" alt="猪">
+          <h2 id="result-title" class="text-3xl font-bold text-gray-800 mb-2">猪</h2>
+          <p id="result-description" class="text-accent font-medium mb-4 text-lg">
             你是一只可爱的小猪猪！
+          </p>
+          <p id="result-analysis" class="text-gray-600 text-sm leading-relaxed bg-white/50 p-4 rounded-xl">
+            分析加载中...
           </p>
         </div>
         
-        <button id="retest-button" class="hidden bg-primary text-white py-2 px-6 rounded-full font-medium mb-4 hover:bg-primary/80 transition-colors">
-          重新测试
-        </button>
+        <div class="flex flex-col gap-3">
+            <button id="retest-button" class="bg-primary text-white py-3 px-6 rounded-full font-bold hover:bg-accent transition-colors shadow-md">
+            🔄 再测一次
+            </button>
+        </div>
         
-        <p class="text-gray-500 text-sm">
-          提示：结果已保存，刷新不会改变哦！
+        <p class="text-gray-400 text-xs mt-4">
+          提示：截图保存你的猪猪形态吧！
         </p>
       </div>
     </div>
@@ -200,6 +161,100 @@
   </div>
 
   <script>
+    // 题目数据
+    const questions = [
+      {
+        question: "现在的精神状态是？",
+        options: [
+          { text: "美丽的精神状态 (发疯)", score: 5 },
+          { text: "想去码头整点薯条", score: 2 },
+          { text: "尸斑淡淡的 (安详)", score: 4 },
+          { text: "玛卡巴卡阿巴阿巴", score: 3 }
+        ]
+      },
+      {
+        question: "面对一桌美食，但只要你在减肥？",
+        options: [
+          { text: "吃饱了才有力气减肥", score: 5 },
+          { text: "这是欺骗餐 (每天都是)", score: 4 },
+          { text: "在这个冰冷的社会只有脂肪有温度", score: 3 },
+          { text: "含泪吃三大碗", score: 2 }
+        ]
+      },
+      {
+        question: "周末早上的你是怎样的状态？",
+        options: [
+          { text: "起猛了，再睡会", score: 4 },
+          { text: "被封印在床上了", score: 5 },
+          { text: "虽然醒了，但灵魂还在梦里", score: 3 },
+          { text: "试图翻身但失败了", score: 2 }
+        ]
+      },
+      {
+        question: "在电梯里遇到半熟不熟的人？",
+        options: [
+          { text: "掏出手机假装有几亿生意", score: 1 },
+          { text: "脚趾扣出精装三室一厅", score: 2 },
+          { text: "只要我不尴尬，尴尬的就是别人", score: 5 },
+          { text: "盯着楼层数字数羊", score: 3 }
+        ]
+      },
+      {
+        question: "你的每日运动量主要来自于？",
+        options: [
+          { text: "取外卖的路上", score: 5 },
+          { text: "在峡谷/海拉鲁大陆狂奔", score: 3 },
+          { text: "躺着翻身", score: 4 },
+          { text: "呼吸 (生存运动)", score: 2 }
+        ]
+      },
+      {
+        question: "如果明天世界末日，你最后做的事？",
+        options: [
+          { text: "把花呗借呗都刷爆", score: 1 },
+          { text: "抱着冰箱不撒手", score: 5 },
+          { text: "删空浏览器记录 (留得清白在人间)", score: 2 },
+          { text: "向暗恋对象表白 (然后说是大冒险)", score: 3 }
+        ]
+      },
+      {
+        question: "看到有人在排很长的队买网红猪蹄？",
+        options: [
+          { text: "加入队伍 (凑热闹是天性)", score: 4 },
+          { text: "这一定是猪猪的陷阱", score: 2 },
+          { text: "立刻点外卖 (懒得排)", score: 5 },
+          { text: "不屑一顾 (除非真的很好吃)", score: 3 }
+        ]
+      },
+      {
+        question: "关于“早八”的看法？",
+        options: [
+          { text: "早八人，早八魂，早八都是人上人", score: 1 },
+          { text: "毁灭吧，赶紧的", score: 4 },
+          { text: "什么是早八？由于睡太死没听说过", score: 5 },
+          { text: "人在工位/教室，心在猪圈", score: 3 }
+        ]
+      },
+      {
+        question: "别人夸你可爱时的反应？",
+        options: [
+          { text: "害羞捂脸 (借机卖萌)", score: 2 },
+          { text: "我也觉得我可爱捏", score: 5 },
+          { text: "你没事吧？吃溜溜梅吗？", score: 3 },
+          { text: "反弹！", score: 1 }
+        ]
+      },
+      {
+        question: "你的理想猪生是？",
+        options: [
+          { text: "混吃等死 (最高境界)", score: 5 },
+          { text: "除了钱一无所有", score: 2 },
+          { text: "成为猪猪侠", score: 1 },
+          { text: "在泥坑里仰望星空", score: 4 }
+        ]
+      }
+    ];
+
     // 结果数据
     const pigResults = [
       {
@@ -358,189 +413,174 @@
       }
     ];
 
+    // 状态变量
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+
     // DOM 元素
-    const testArea = document.getElementById('test-area');
+    const startView = document.getElementById('start-view');
+    const quizView = document.getElementById('quiz-view');
     const resultArea = document.getElementById('result-area');
-    const progressCircle = document.getElementById('progress-circle');
-    const progressText = document.getElementById('progress-text');
-    const progressPercentage = document.getElementById('progress-percentage');
-    const pressHint = document.getElementById('press-hint');
-    const instruction = document.getElementById('instruction');
+    
+    const questionCounter = document.getElementById('question-counter');
+    const progressBar = document.getElementById('progress-bar');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    
     const resultEmoji = document.getElementById('result-emoji');
     const resultTitle = document.getElementById('result-title');
     const resultDescription = document.getElementById('result-description');
+    const resultAnalysis = document.getElementById('result-analysis');
     const retestButton = document.getElementById('retest-button');
-    
-    // 进度条参数
-    const circumference = 2 * Math.PI * 85; // 圆的周长
-    const requiredHoldTime = 3000; // 长按所需时间（毫秒）
-    let startTime = 0;
-    let isHolding = false;
-    let progressInterval;
-    
-    // 初始化进度条
-    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-    progressCircle.style.strokeDashoffset = circumference;
-    
-    // 检查是否已有结果
-    let savedResult = null;
-    try {
-      savedResult = localStorage.getItem('pigTestResult');
+
+    // 初始化检查
+    window.onload = () => {
+      const savedResult = localStorage.getItem('pigTestResult_Quiz');
       if (savedResult) {
-        showResult(JSON.parse(savedResult));
+        try {
+          showResult(JSON.parse(savedResult));
+        } catch(e) {
+          localStorage.removeItem('pigTestResult_Quiz');
+        }
       }
-    } catch (error) {
-      console.error('读取本地存储失败:', error);
-      // 清除可能损坏的数据
-      localStorage.removeItem('pigTestResult');
-      savedResult = null;
+    };
+
+    // 开始测试
+    function startQuiz() {
+      currentQuestionIndex = 0;
+      totalScore = 0;
+      
+      startView.classList.add('hidden');
+      resultArea.classList.add('hidden');
+      quizView.classList.remove('hidden');
+      
+      showQuestion();
     }
-    
-    // 长按开始事件
-    function handleHoldStart(e) {
-      // 阻止默认行为
-      e.preventDefault();
+
+    // 显示问题
+    function showQuestion() {
+      const q = questions[currentQuestionIndex];
       
-      // 如果已有结果，不执行任何操作
-      if (localStorage.getItem('pigTestResult')) return;
+      // 更新进度
+      questionCounter.textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+      const progressPercent = ((currentQuestionIndex) / questions.length) * 100;
+      progressBar.style.width = `${progressPercent}%`;
       
-      isHolding = true;
-      startTime = Date.now();
+      // 更新内容 (添加淡入动画)
+      questionText.classList.remove('animate-fade-in');
+      void questionText.offsetWidth; // 触发重绘
+      questionText.classList.add('animate-fade-in');
+      questionText.textContent = q.question;
       
-      // 显示进度条
-      progressText.classList.remove('hidden');
-      pressHint.classList.add('hidden');
-      instruction.textContent = '正在测试中...';
-      
-      // 开始更新进度条
-      progressInterval = setInterval(updateProgress, 30);
-      
-      // 添加视觉反馈
-      testArea.classList.add('scale-105');
-      testArea.style.transition = 'transform 0.2s';
+      // 生成选项
+      optionsContainer.innerHTML = '';
+      q.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option flex items-center';
+        btn.style.animationDelay = `${index * 0.1}s`;
+        btn.classList.add('animate-fade-in');
+        // 添加选项字母 A, B, C, D
+        const letter = String.fromCharCode(65 + index);
+        btn.innerHTML = `<span class="font-bold text-primary mr-3 text-lg">${letter}.</span> <span>${opt.text}</span>`;
+        
+        btn.onclick = () => handleAnswer(opt.score);
+        optionsContainer.appendChild(btn);
+      });
     }
-    
-    // 长按结束事件
-    function handleHoldEnd() {
-      // 如果已有结果，不执行任何操作
-      if (localStorage.getItem('pigTestResult')) return;
+
+    // 处理回答
+    function handleAnswer(score) {
+      totalScore += score;
       
-      isHolding = false;
-      clearInterval(progressInterval);
-      
-      // 重置进度条
-      resetProgress();
-      
-      // 恢复视觉效果
-      testArea.classList.remove('scale-105');
-      instruction.textContent = '将手指放到屏幕中间区域，长按汲取猪元素';
-    }
-    
-    // 更新进度条
-    function updateProgress() {
-      if (!isHolding) return;
-      
-      const elapsedTime = Date.now() - startTime;
-      const progress = Math.min(elapsedTime / requiredHoldTime, 1);
-      const offset = circumference - (progress * circumference);
-      
-      // 更新进度条
-      progressCircle.style.strokeDashoffset = offset;
-      
-      // 更新百分比文本
-      const percentage = Math.round(progress * 100);
-      progressPercentage.textContent = `${percentage}%`;
-      
-      // 如果达到100%，生成结果
-      if (progress >= 1) {
-        clearInterval(progressInterval);
-        generateResult();
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        // 稍微延迟一下让用户看到点击反馈
+        setTimeout(showQuestion, 200);
+      } else {
+        finishQuiz();
       }
     }
-    
-    // 重置进度条
-    function resetProgress() {
-      clearInterval(progressInterval);
-      progressCircle.style.strokeDashoffset = circumference;
-      progressText.classList.add('hidden');
-      pressHint.classList.remove('hidden');
-      progressPercentage.textContent = '0%';
+
+    // 结束测试
+    function finishQuiz() {
+      quizView.classList.add('hidden');
+      generateResult();
     }
-    
-    // 生成随机结果
+
+    // 生成结果
     function generateResult() {
-      try {
-        // 播放完成音效
-        playSound('complete');
-        
-        // 随机选择一个结果
-        const randomIndex = Math.floor(Math.random() * pigResults.length);
-        const result = pigResults[randomIndex];
-        
-        // 保存结果到本地存储
-        localStorage.setItem('pigTestResult', JSON.stringify(result));
-        
-        // 显示结果
-        showResult(result);
-      } catch (error) {
-        console.error('生成结果失败:', error);
-        alert('生成结果失败，请重试！');
-        // 重置界面
-        resetProgress();
-        instruction.textContent = '长按屏幕中间区域，看看你是什么猪！';
+      // 分数范围映射逻辑
+      // 总共10题，最低10分，最高50分
+      
+      let resultPool = [];
+      
+      if (totalScore <= 20) {
+        // 10-20分：现充/卷王/人类/高智商
+        resultPool = ['human', 'mechanical-pig', 'zhuge-liang', 'wild-boar', 'crystal-pig'];
+      } else if (totalScore <= 30) {
+        // 21-30分：正常人/社畜/可爱/伪猪
+        resultPool = ['pig-human', 'black-white-pig', 'pig-stamp', 'pork-skewer', 'pig-cat', 'snow-pig'];
+      } else if (totalScore <= 40) {
+        // 31-40分：懒狗/乐子人/有点大病
+        resultPool = ['pig', 'black-pig', 'magic-pig', 'doll-pig', 'pig-ball', 'demon-pig'];
+      } else {
+        // 41-50分：纯种猪/发疯/不可名状
+        resultPool = ['zombie-pig', 'skeleton-pig', 'heaven-pig', 'explosive-pig', 'soul-pig'];
       }
+      
+      // 从对应池子中随机抽取一个ID
+      const randomId = resultPool[Math.floor(Math.random() * resultPool.length)];
+      
+      // 在 pigResults 中查找对应 ID 的结果对象
+      const result = pigResults.find(r => r.id === randomId) || pigResults[0];
+      
+      // 保存结果
+      localStorage.setItem('pigTestResult_Quiz', JSON.stringify(result));
+      
+      showResult(result);
+      playSound('complete');
     }
-    
+
     // 显示结果
     function showResult(result) {
-      // 隐藏测试区域，显示结果区域
-      testArea.classList.add('hidden');
+      startView.classList.add('hidden');
+      quizView.classList.add('hidden');
       resultArea.classList.remove('hidden');
       
-      // 设置结果内容
-      const imageSrc = `image/${result.id}.png`;
-      resultEmoji.src = imageSrc;
-      resultEmoji.alt = result.name;
+      // 设置内容
+      resultEmoji.src = `image/${result.id}.png`;
+      resultEmoji.onerror = () => { resultEmoji.src = 'image/pig.png'; };
       resultTitle.textContent = result.name;
       resultDescription.textContent = result.description;
-      
-      // 添加图片加载失败处理
-      resultEmoji.onerror = function() {
-        // 如果图片加载失败，使用默认图片
-        resultEmoji.src = 'image/pig.png';
-      };
-      
-      // 添加结果出现动画
-      resultArea.style.opacity = '0';
-      resultArea.style.transform = 'translateY(20px)';
-      resultArea.style.transition = 'opacity 0.5s, transform 0.5s';
-      
-      setTimeout(() => {
-        resultArea.style.opacity = '1';
-        resultArea.style.transform = 'translateY(0)';
-      }, 10);
+      resultAnalysis.textContent = result.analysis;
     }
-    
-    // 播放音效
+
+    // 重新测试
+    retestButton.onclick = () => {
+      localStorage.removeItem('pigTestResult_Quiz');
+      // 重置进度条
+      progressBar.style.width = '0%';
+      startQuiz();
+    };
+
+    // 音效 (保持原有)
     function playSound(type) {
       try {
-        // 创建音频上下文
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+        if (!AudioContext) return;
         
-        // 创建振荡器
+        const audioCtx = new AudioContext();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         
-        // 设置音效参数
         if (type === 'complete') {
           oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-          oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-          oscillator.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+          oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+          oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+          oscillator.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
           
           gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
           gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
@@ -548,51 +588,9 @@
           oscillator.start(audioCtx.currentTime);
           oscillator.stop(audioCtx.currentTime + 0.3);
         }
-      } catch (error) {
-        console.error('播放音效失败:', error);
-        // 音效播放失败不影响主要功能
+      } catch (e) {
+        console.log('Audio play failed', e);
       }
-    }
-    
-
-    
-    // 重新测试函数
-    function handleRetest() {
-      try {
-        // 清除本地存储结果
-        localStorage.removeItem('pigTestResult');
-        
-        // 重置进度条
-        resetProgress();
-        
-        // 显示测试区域，隐藏结果区域
-        testArea.classList.remove('hidden');
-        resultArea.classList.add('hidden');
-        
-        // 重置提示文字
-        instruction.textContent = '长按屏幕中间区域，看看你是什么猪！';
-      } catch (error) {
-        console.error('重新测试失败:', error);
-      }
-    }
-    
-    // 触摸事件监听
-    try {
-      const progressContainer = document.querySelector('.progress-container');
-      
-      if (progressContainer) {
-        progressContainer.addEventListener('mousedown', handleHoldStart);
-        progressContainer.addEventListener('touchstart', handleHoldStart);
-      }
-      
-      document.addEventListener('mouseup', handleHoldEnd);
-      document.addEventListener('touchend', handleHoldEnd);
-      document.addEventListener('touchcancel', handleHoldEnd);
-      
-      // 重新测试按钮事件监听
-      retestButton.addEventListener('click', handleRetest);
-    } catch (error) {
-      console.error('添加事件监听失败:', error);
     }
   </script>
 </body>
