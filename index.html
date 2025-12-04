@@ -157,6 +157,7 @@
     <!-- 页脚 -->
     <footer class="text-gray-500 text-sm">
       <p>作者：nanan <span class="text-primary">🐽</span></p>
+      <p class="mt-1 text-gray-400">yhny1001 二改</p>
     </footer>
   </div>
 
@@ -497,7 +498,9 @@
         // 稍微延迟一下让用户看到点击反馈
         setTimeout(showQuestion, 200);
       } else {
-        finishQuiz();
+        // 最后一题：先把进度条拉满再结束
+        progressBar.style.width = '100%';
+        setTimeout(finishQuiz, 300);
       }
     }
 
